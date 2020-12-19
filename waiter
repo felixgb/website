@@ -1,0 +1,27 @@
+#!/usr/bin/env bash
+
+RED='\033[0;31m'
+GREEN='\033[0;32m'
+NC='\033[0m' # No Color
+
+RELOAD_KEYS="CTRL+R"
+BROWSER="firefox"
+
+MYWINDOW=$(xdotool getactivewindow)
+
+browser_windows="$(xdotool search --sync --all --onlyvisible --name ${BROWSER})"
+
+inotifywait -e close_write,moved_to,create -m . |
+while read -r directory events filename; do
+  if [ "$filename" = "home.rkt" ]; then
+    printf "\033c"
+		# printf "${GREEN}reloaded $filename ${NC}\n"
+
+    racket home.rkt 2> >(sed $'s,.*,\e[31m&\e[m,'>&2)
+
+    for bw in $browser_windows; do
+      xdotool key --window "$bw" "$RELOAD_KEYS"
+    done
+
+  fi
+done
